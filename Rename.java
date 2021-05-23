@@ -34,7 +34,7 @@ public class Rename {
     // 'start' MUST be the index of an option/flag
     public static int countValues(String args[], int start) {
         int i = 0;
-        while (start + i + 1 < args.length && args[start + i].charAt(0) != '-') {
+        while (start + i + 1 < args.length && args[start + i + 1].charAt(0) != '-') {
             ++i;
         }
         return i;
@@ -49,10 +49,11 @@ public class Rename {
             throw Throwable.Exception.RuntimeException.IllegalArgumentException;
         }
         if (((args[start] == "-r" || args[start] == "-replace") && countValues(args, start) != 2) ||
-             (args[start] != "-r" && args[start] != "-replace"  && countValues(args, start) != 1)) {
+             (args[start] != "-r" && args[start] != "-replace"  && countValues(args, start) == 0)) {
             errorInsufficientValues(args[start]);
             throw Throwable.Exception.RuntimeException.IllegalArgumentException;
         }
+        return encountered;
     }
 
     // called after going through all options to see if anything is missing.
@@ -67,8 +68,19 @@ public class Rename {
         }
     }
 
-    public static ArrayList<String> collectArguments(ArrayList<String> values) {
-
+    // 'start' MUST be the index of an option/flag
+    //   - collect the values following args[start]
+    public static ArrayList<String> collectArguments(ArrayList<String> values, String args[], int i) {
+        ++i;
+        while (i < args.length && args[i].charAt(0) != '-') {
+            if ((args[i].equals("-f") || args[i].equals("-file")) && values.contains(args[i])) {
+                Systems.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
+            } else {
+                values.add(args[i]);
+            }
+            ++i;
+        }
+        return values;
     }
 
     // ------------------ main ---------------------
@@ -82,6 +94,9 @@ public class Rename {
         ArrayList<String> options = new ArrayList<String> {"-f", "-filename", "-p", "-prefix", "-s", "-suffix", "-r", "-replace"};
         ArrayList<Character> encountered = new ArrayList<Character>();
         ArrayList<String> filenames = new ArrayList<String>();
+        ArrayList<String> prefixes = new ArrayList<String>();
+        ArrayList<String> suffixes = new ArrayList<String>();
+        ArrayList<String> toReplace = new ArrayList<String>(2);
 
         int i = 0;
         while (i < args.length) {
@@ -93,19 +108,17 @@ public class Rename {
                 }
                 ++i;
                 if (args[i].equals("-f") || args[i].equals("-file")) {
-                    while (i < args.length && args[i].charAt(0) != '-') {
-                        if (filenames.contains(args[i])) {
-                            Systems.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
-                        } else {
-                            filenames.add(args[i]);
-                        }
-                        ++i;
-                    }
+                    filenames = collectArguments(filenames, args, i);
+                    i += filenames.length;
                 } else if (args[i].equals("-p") || args[i].equals("-prefix")) {
-                    while (i < args.length && args[i].charAt(0) != '-') {
-                        filenames.add(args[i]);
-                        ++i;
-                    }
+                    prefixes = collectArguments(prefixes, args, i);
+                    i += prefixes.length;
+                } else if (args[i].equals("-s") || args[i].equals("-suffix")) {
+                    suffixes = collectArguments(suffixes, args, i);
+                    i += suffixes.length;
+                } else { // args[i].equals("-r") || args[i].equals("-replace"))
+                    toReplace = collectArguments(toReplace, args, i);
+                    i += toReplace.length;
                 }
             } else if (args[i].charAt(0) == '-') {
                 errorInvalidOption(args[i]);
