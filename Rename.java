@@ -14,31 +14,64 @@ public class Rename {
         System.out.println("-h|help                     :: print out this help and exit the program.");
     }
 
-    // this function checks if:
-    //   - there are duplicate options
-    //   - there are no values specified for the given option.
+
+    public static void errorInvalidOption(String s) {
+        System.out.println("Invalid option provided (" + s + "). Try 'rename -h' to see all valid options.");
+    }
+    public static void errorNoFileOption() {
+        System.out.println("No file option ('-f' or '-file'). You must include at least 1 file to rename.");
+    }
+    public static void errorNoOptions() {
+        System.out.println("No option provided (excluding '-f' or '-file'). See 'rename -h' to see what options to include.");
+    }
+    public static void errorInsufficientValues(String s) {
+        System.out.println("Not enough values provided for " + s + ". Try 'rename -h' to see what values you should include.");
+    }
+    public static void errorDuplicateOption(String s) {
+        System.out.println("Duplicate option provided (" + s + "). Make sure you only include 1 option if necessary.");
+    }
+
+    // 'start' MUST be the index of an option/flag
+    public static int countValues(String args[], int start) {
+        int i = 0;
+        while (start + i + 1 < args.length && args[start + i].charAt(0) != '-') {
+            ++i;
+        }
+        return i;
+    }
+
+    // this function makes sure that:
+    //   - there are no duplicate options
+    //   - there are enough values specified for the given option. ( >=2 for '-r', >=1 for everything else )
     public static ArrayList<Character> checkErrors(ArrayList<String> encountered, String args[], int start) {
         if (encountered.contains(args[start].charAt(1))) {
-            // error message (duplicate option) errorDupliateOption
+            errorDuplicateOption(args[start]);
             throw Throwable.Exception.RuntimeException.IllegalArgumentException;
         }
-        if (start + 1 == args.length || args[start + 1].charAt(0) == '-') {
-            // error message (no values) errorNoValues
+        if (((args[start] == "-r" || args[start] == "-replace") && countValues(args, start) != 2) ||
+             (args[start] != "-r" && args[start] != "-replace"  && countValues(args, start) != 1)) {
+            errorInsufficientValues(args[start]);
             throw Throwable.Exception.RuntimeException.IllegalArgumentException;
         }
     }
 
+    // called after going through all options to see if anything is missing.
     public static void checkOptions(ArrayList<String> e) {
         if (!e.contains('p') || !e.contains('s') || !e.contains('r')) {
-            // error message (no options specified) errorNoOptions
+            errorNoOptions();
             throw Throwable.Exception.RuntimeException.IllegalArgumentException;
         }
         if (!e.contains('f')) {
-            // error message (no filename) errorNoFileOption
+            errorNoFileOption();
             throw Throwable.Exception.RuntimeException.IllegalArgumentException;
         }
     }
 
+    public static ArrayList<String> collectArguments(ArrayList<String> values) {
+
+    }
+
+    // ------------------ main ---------------------
     public static void main(String args[]) {
         // check for help first. Then we can check for argument errors later without worrying about it.
         if (args.contains("-h") || args.contains("-help")) {
@@ -62,15 +95,20 @@ public class Rename {
                 if (args[i].equals("-f") || args[i].equals("-file")) {
                     while (i < args.length && args[i].charAt(0) != '-') {
                         if (filenames.contains(args[i])) {
-                            Systems.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.")
+                            Systems.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
                         } else {
                             filenames.add(args[i]);
                         }
                         ++i;
                     }
+                } else if (args[i].equals("-p") || args[i].equals("-prefix")) {
+                    while (i < args.length && args[i].charAt(0) != '-') {
+                        filenames.add(args[i]);
+                        ++i;
+                    }
                 }
             } else if (args[i].charAt(0) == '-') {
-                // invalid flag
+                errorInvalidOption(args[i]);
                 return;
             }
             ++i;
