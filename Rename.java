@@ -5,15 +5,18 @@ import java.util.List;
 public class Rename {
 
     public static void printHelp() {
+        System.out.println();
+        System.out.println("Printing help...");
+        System.out.println();
         System.out.println("(c) 2021 Eddie Kim, Revised May XX, 2021.");
         System.out.println("Usage: rename [-option argument1 argument2 ...]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("-f|file [filename]          :: file(s) to change.");
-        System.out.println("-p|prefix [string]          :: rename [filename] so that it starts with [string].");
-        System.out.println("-s|suffix [string]          :: rename [filename] so that it ends with [string].");
-        System.out.println("-r|replace [str1] [str2]    :: rename [filename] by replacing all instances of [str1] with [str2].");
-        System.out.println("-h|help                     :: print out this help and exit the program.");
+        System.out.println("-f|file [filename] ...         :: file(s) to change.");
+        System.out.println("-p|prefix [string] ...         :: rename [filename] so that it starts with [string].");
+        System.out.println("-s|suffix [string] ...         :: rename [filename] so that it ends with [string].");
+        System.out.println("-r|replace [str1] [str2]       :: rename [filename] by replacing all instances of [str1] with [str2].");
+        System.out.println("-h|help                        :: print out this help and exit the program.");
     }
 
 
@@ -27,7 +30,7 @@ public class Rename {
         System.out.println("No option provided (excluding '-f' or '-file'). See 'rename -h' to see what options to include.");
     }
     public static void errorInsufficientValues(String s) {
-        System.out.println("Not enough values provided for " + s + ". Try 'rename -h' to see what values you should include.");
+        System.out.println("Incorrect number of values provided for " + s + ". Try 'rename -h' to see how many values you should include.");
     }
     public static void errorDuplicateOption(String s) {
         System.out.println("Duplicate option provided (" + s + "). Make sure you only include 1 option if necessary.");
@@ -45,21 +48,21 @@ public class Rename {
     // this function makes sure that:
     //   - there are no duplicate options
     //   - there are enough values specified for the given option. ( >=2 for '-r', >=1 for everything else )
-    public static ArrayList<Character> checkErrors(ArrayList<Character> encountered, String args[], int start) {
+    public static Character checkErrors(ArrayList<Character> encountered, String args[], int start) throws Exception {
         if (encountered.contains(args[start].charAt(1))) {
             errorDuplicateOption(args[start]);
             throw new Exception();
         }
-        if (((args[start] == "-r" || args[start] == "-replace") && countValues(args, start) != 2) ||
-             (args[start] != "-r" && args[start] != "-replace"  && countValues(args, start) == 0)) {
+        if (((args[start].equals("-r") || args[start].equals("-replace")) && countValues(args, start) != 2) ||
+             (args[start].equals("-r") && args[start].equals("-replace")  && countValues(args, start) == 0)) {
             errorInsufficientValues(args[start]);
             throw new Exception();
         }
-        return encountered;
+        return args[start].charAt(1);
     }
 
     // called after going through all options to see if anything is missing.
-    public static void checkOptions(ArrayList<Character> encountered) {
+    public static void checkOptions(ArrayList<Character> encountered) throws Exception {
         if (!encountered.contains('p') || !encountered.contains('s') || !encountered.contains('r')) {
             errorNoOptions();
             throw new Exception();
@@ -72,13 +75,15 @@ public class Rename {
 
     // 'start' MUST be the index of an option/flag
     //   - collect the values following args[start]
-    public static ArrayList<String> collectArguments(ArrayList<String> values, String args[], int i) {
+    public static ArrayList<String> collectValues(ArrayList<String> values, String args[], int i) {
+        int start = i;
         ++i;
         while (i < args.length && args[i].charAt(0) != '-') {
-            if ((args[i].equals("-f") || args[i].equals("-file")) && values.contains(args[i])) {
+            if ((args[start].equals("-f") || args[start].equals("-file")) && values.contains(args[i])) {
                 System.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
             } else {
                 values.add(args[i]);
+                System.out.println("values is " + values);
             }
             ++i;
         }
@@ -93,7 +98,14 @@ public class Rename {
             return;
         }
 
-        var options = List.of("-f", "-filename", "-p", "-prefix", "-s", "-suffix", "-r", "-replace");
+        // delete this
+        System.out.print("args is [");
+        for (int i = 0; i < args.length; i++) {
+            System.out.print(args[i] + ", ");
+        }
+        System.out.println("]");
+
+        String options[] = {"-f", "-filename", "-p", "-prefix", "-s", "-suffix", "-r", "-replace"};
         ArrayList<Character> encountered = new ArrayList<Character>();
         ArrayList<String> filenames = new ArrayList<String>();
         ArrayList<String> prefixes = new ArrayList<String>();
@@ -102,24 +114,25 @@ public class Rename {
 
         int i = 0;
         while (i < args.length) {
-            if (options.contains(args[i])) {
+            if (Arrays.asList(options).contains(args[i])) {
                 try {
-                    encountered = checkErrors(encountered, args, i);
+                    encountered.add(checkErrors(encountered, args, i));
+                    System.out.println("encountered is " + encountered);
                 } catch (Exception ex) {
                     return;
                 }
-                ++i;
-                if (args[i].equals("-f") || args[i].equals("-file")) {
-                    filenames = collectArguments(filenames, args, i);
+                if (encountered.get(encountered.size() - 1) == 'f') {
+                    filenames = collectValues(filenames, args, i);
                     i += filenames.size();
-                } else if (args[i].equals("-p") || args[i].equals("-prefix")) {
-                    prefixes = collectArguments(prefixes, args, i);
+                    // continue;
+                } else if (encountered.get(encountered.size() - 1) == 'p') {
+                    prefixes = collectValues(prefixes, args, i);
                     i += prefixes.size();
-                } else if (args[i].equals("-s") || args[i].equals("-suffix")) {
-                    suffixes = collectArguments(suffixes, args, i);
+                } else if (encountered.get(encountered.size() - 1) == 's') {
+                    suffixes = collectValues(suffixes, args, i);
                     i += suffixes.size();
-                } else { // args[i].equals("-r") || args[i].equals("-replace"))
-                    toReplace = collectArguments(toReplace, args, i);
+                } else if (encountered.get(encountered.size() - 1) == 'r') {
+                    toReplace = collectValues(toReplace, args, i);
                     i += toReplace.size();
                 }
             } else if (args[i].charAt(0) == '-') {
@@ -128,12 +141,18 @@ public class Rename {
             }
             ++i;
         }
+        System.out.println("filenames is " + filenames);
+        System.out.println("prefixes is " + prefixes);
+        System.out.println("suffixes is " + suffixes);
+        System.out.println("toReplace is " + toReplace);
+
 
         try {
             checkOptions(encountered);
         } catch (Exception ex) {
             return;
         }
+        System.out.println("reached");
 
         // now, change the filenames.
     }
