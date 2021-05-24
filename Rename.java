@@ -1,4 +1,6 @@
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Rename {
 
@@ -43,28 +45,28 @@ public class Rename {
     // this function makes sure that:
     //   - there are no duplicate options
     //   - there are enough values specified for the given option. ( >=2 for '-r', >=1 for everything else )
-    public static ArrayList<Character> checkErrors(ArrayList<String> encountered, String args[], int start) {
+    public static ArrayList<Character> checkErrors(ArrayList<Character> encountered, String args[], int start) {
         if (encountered.contains(args[start].charAt(1))) {
             errorDuplicateOption(args[start]);
-            throw Throwable.Exception.RuntimeException.IllegalArgumentException;
+            throw new Exception();
         }
         if (((args[start] == "-r" || args[start] == "-replace") && countValues(args, start) != 2) ||
              (args[start] != "-r" && args[start] != "-replace"  && countValues(args, start) == 0)) {
             errorInsufficientValues(args[start]);
-            throw Throwable.Exception.RuntimeException.IllegalArgumentException;
+            throw new Exception();
         }
         return encountered;
     }
 
     // called after going through all options to see if anything is missing.
-    public static void checkOptions(ArrayList<String> e) {
-        if (!e.contains('p') || !e.contains('s') || !e.contains('r')) {
+    public static void checkOptions(ArrayList<Character> encountered) {
+        if (!encountered.contains('p') || !encountered.contains('s') || !encountered.contains('r')) {
             errorNoOptions();
-            throw Throwable.Exception.RuntimeException.IllegalArgumentException;
+            throw new Exception();
         }
-        if (!e.contains('f')) {
+        if (!encountered.contains('f')) {
             errorNoFileOption();
-            throw Throwable.Exception.RuntimeException.IllegalArgumentException;
+            throw new Exception();
         }
     }
 
@@ -74,7 +76,7 @@ public class Rename {
         ++i;
         while (i < args.length && args[i].charAt(0) != '-') {
             if ((args[i].equals("-f") || args[i].equals("-file")) && values.contains(args[i])) {
-                Systems.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
+                System.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
             } else {
                 values.add(args[i]);
             }
@@ -86,12 +88,12 @@ public class Rename {
     // ------------------ main ---------------------
     public static void main(String args[]) {
         // check for help first. Then we can check for argument errors later without worrying about it.
-        if (args.contains("-h") || args.contains("-help")) {
+        if (Arrays.asList(args).contains("-h") || Arrays.asList(args).contains("-help")) {
             printHelp();
             return;
         }
 
-        ArrayList<String> options = new ArrayList<String> {"-f", "-filename", "-p", "-prefix", "-s", "-suffix", "-r", "-replace"};
+        var options = List.of("-f", "-filename", "-p", "-prefix", "-s", "-suffix", "-r", "-replace");
         ArrayList<Character> encountered = new ArrayList<Character>();
         ArrayList<String> filenames = new ArrayList<String>();
         ArrayList<String> prefixes = new ArrayList<String>();
@@ -109,16 +111,16 @@ public class Rename {
                 ++i;
                 if (args[i].equals("-f") || args[i].equals("-file")) {
                     filenames = collectArguments(filenames, args, i);
-                    i += filenames.length;
+                    i += filenames.size();
                 } else if (args[i].equals("-p") || args[i].equals("-prefix")) {
                     prefixes = collectArguments(prefixes, args, i);
-                    i += prefixes.length;
+                    i += prefixes.size();
                 } else if (args[i].equals("-s") || args[i].equals("-suffix")) {
                     suffixes = collectArguments(suffixes, args, i);
-                    i += suffixes.length;
+                    i += suffixes.size();
                 } else { // args[i].equals("-r") || args[i].equals("-replace"))
                     toReplace = collectArguments(toReplace, args, i);
-                    i += toReplace.length;
+                    i += toReplace.size();
                 }
             } else if (args[i].charAt(0) == '-') {
                 errorInvalidOption(args[i]);
