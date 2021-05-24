@@ -6,9 +6,7 @@ public class Rename {
 
     public static void printHelp() {
         System.out.println();
-        System.out.println("Printing help...");
-        System.out.println();
-        System.out.println("(c) 2021 Eddie Kim, Revised May XX, 2021.");
+        System.out.println("(c) 2021 Eddie Kim, Revised May XX, 2021."); // edit this
         System.out.println("Usage: rename [-option argument1 argument2 ...]");
         System.out.println();
         System.out.println("Options:");
@@ -27,7 +25,7 @@ public class Rename {
         System.out.println("No file option ('-f' or '-file'). You must include at least 1 file to rename.");
     }
     public static void errorNoOptions() {
-        System.out.println("No option provided (excluding '-f' or '-file'). See 'rename -h' to see what options to include.");
+        System.out.println("No option provided (other than possibly '-f' or '-file'). See 'rename -h' to see what options to include.");
     }
     public static void errorInsufficientValues(String s) {
         System.out.println("Incorrect number of values provided for " + s + ". Try 'rename -h' to see how many values you should include.");
@@ -47,14 +45,14 @@ public class Rename {
 
     // this function makes sure that:
     //   - there are no duplicate options
-    //   - there are enough values specified for the given option. ( >=2 for '-r', >=1 for everything else )
+    //   - there are enough values specified for the given option. ( 2 for '-r', >=1 for everything else )
     public static Character checkErrors(ArrayList<Character> encountered, String args[], int start) throws Exception {
         if (encountered.contains(args[start].charAt(1))) {
             errorDuplicateOption(args[start]);
             throw new Exception();
         }
-        if (((args[start].equals("-r") || args[start].equals("-replace")) && countValues(args, start) != 2) ||
-             (args[start].equals("-r") && args[start].equals("-replace")  && countValues(args, start) == 0)) {
+        if ((( args[start].equals("-r") ||  args[start].equals("-replace")) && countValues(args, start) != 2) ||
+             (!args[start].equals("-r") && !args[start].equals("-replace")  && countValues(args, start) == 0)) {
             errorInsufficientValues(args[start]);
             throw new Exception();
         }
@@ -63,7 +61,7 @@ public class Rename {
 
     // called after going through all options to see if anything is missing.
     public static void checkOptions(ArrayList<Character> encountered) throws Exception {
-        if (!encountered.contains('p') || !encountered.contains('s') || !encountered.contains('r')) {
+        if (!encountered.contains('p') && !encountered.contains('s') && !encountered.contains('r')) {
             errorNoOptions();
             throw new Exception();
         }
@@ -100,10 +98,10 @@ public class Rename {
 
         // delete this
         System.out.print("args is [");
-        for (int i = 0; i < args.length; i++) {
+        for (int i = 0; i < args.length - 1; i++) {
             System.out.print(args[i] + ", ");
         }
-        System.out.println("]");
+        System.out.println(args[args.length - 1] + "]");
 
         String options[] = {"-f", "-filename", "-p", "-prefix", "-s", "-suffix", "-r", "-replace"};
         ArrayList<Character> encountered = new ArrayList<Character>();
@@ -124,7 +122,6 @@ public class Rename {
                 if (encountered.get(encountered.size() - 1) == 'f') {
                     filenames = collectValues(filenames, args, i);
                     i += filenames.size();
-                    // continue;
                 } else if (encountered.get(encountered.size() - 1) == 'p') {
                     prefixes = collectValues(prefixes, args, i);
                     i += prefixes.size();
