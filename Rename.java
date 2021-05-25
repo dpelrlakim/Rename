@@ -7,44 +7,45 @@ import static java.util.Map.entry;
 import java.io.File;
 
 public class Rename {
+    public static final String ERROR = "Error: ";
+    public static final String FAIL = "Fail. ";
 
     public static void printHelp() {
         System.out.println();
-        System.out.println("(c) 2021 Eddie Kim, Revised May 24, 2021.");
+        System.out.println("(c) 2021 Eddie Kim, Revised May 25, 2021.");
         System.out.println("Usage: rename [-option argument1 argument2 ...]");
         System.out.println();
         System.out.println("Options:");
-        System.out.println("-f|file [filename] ...         :: file(s) to change.");
-        System.out.println("-p|prefix [string] ...         :: rename [filename] so that it starts with [string].");
-        System.out.println("-s|suffix [string] ...         :: rename [filename] so that it ends with [string].");
-        System.out.println("-r|replace [str1] [str2]       :: rename [filename] by replacing all instances of [str1] with [str2].");
-        System.out.println("-h|help                        :: print out this help and exit the program.");
+        System.out.println("-f|file [filename] ...    :: file(s) to change.");
+        System.out.println("-p|prefix [string] ...    :: rename [filename] so that it starts with [string].");
+        System.out.println("-s|suffix [string] ...    :: rename [filename] so that it ends with [string].");
+        System.out.println("-r|replace [str1] [str2]  :: rename [filename] by replacing all instances of [str1] with [str2].");
+        System.out.println("-h|help                   :: print out this help and exit the program.");
     }
 
 
+    // error messages
     public static void errorInvalidOption(String s) {
-        System.out.println("Invalid option provided (" + s + "). Try 'rename -h' to see all valid options.");
+        System.out.println(ERROR + "Invalid option provided (" + s + "). Try 'rename -h' to see all valid options.");
     }
     public static void errorNoFileOption() {
-        System.out.println("No file option ('-f' or '-file'). You must include at least 1 file to rename.");
+        System.out.println(ERROR + "No file option ('-f' or '-file'). You must include at least 1 file to rename.");
     }
     public static void errorNoOptions() {
-        System.out.println("No option provided (other than possibly '-f' or '-file'). Try 'rename -h' to see what options to include.");
+        System.out.println(ERROR + "No option provided (other than possibly '-f' or '-file'). Try 'rename -h' to see what options to include.");
     }
     public static void errorInsufficientValues(String s) {
-        System.out.println("Incorrect number of values provided for " + s + ". Try 'rename -h' to see how many values you should include.");
+        System.out.println(ERROR + "Incorrect number of values provided for " + s + ". Try 'rename -h' to see how many values you should include.");
     }
     public static void errorDuplicateOption(String s) {
-        System.out.println("Duplicate option provided (" + s + "). Make sure you only include 1 option if necessary.");
-    }
-    public static void errorRenaming(String s) {
-        System.out.println("Rename operation failed for the following file: " + s + ". Will still try to rename all other files if any...");
+        System.out.println(ERROR + "Duplicate option provided (" + s + "). Make sure you only include 1 option if necessary.");
     }
     public static void errorTargetMissing(String theFile, String theTarget) {
-        System.out.println("Replace operation failed - " + theFile + " does not contain " + theTarget + " in its name. " +
+        System.out.println(ERROR + "Replace operation failed - " + theFile + " does not contain " + theTarget + " in its name. " +
                 "Please make sure the filename contains the replacement target.");
     }
 
+    // for debugging purposes (not used in the submission)
     public static void printStuff(Map<Character, ArrayList<String>> values) {
         System.out.println("values    is " + values);
     }
@@ -95,7 +96,6 @@ public class Rename {
                 System.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
             } else {
                 values.get(opt).add(args[i]);
-                printStuff(values); // delete this-----------------
             }
             ++i;
         }
@@ -138,13 +138,6 @@ public class Rename {
             return;
         }
 
-        // -------------------------delete this
-        System.out.print("args      is [");
-        for (int i = 0; i < args.length - 1; i++) {
-            System.out.print(args[i] + ", ");
-        }
-        System.out.println(args[args.length - 1] + "]");
-
         String options[] = {"-f", "-file", "-p", "-prefix", "-s", "-suffix", "-r", "-replace"};
         // keep track of all options given and preserve their order.
         ArrayList<Character> encountered = new ArrayList<Character>();
@@ -161,7 +154,7 @@ public class Rename {
             if (Arrays.asList(options).contains(args[index])) {
                 try {
                     checkErrors(encountered, args, index);
-                    System.out.println("encountered is " + encountered);
+                    // System.out.println("encountered is " + encountered); // delete this-------------
                 } catch (Exception ex) {
                     return;
                 }
@@ -174,12 +167,6 @@ public class Rename {
             }
             ++index;
         }
-
-        // ---------------------------delete this
-        System.out.println("filenames is " + values.get('f'));
-        System.out.println("prefixes  is " + values.get('p'));
-        System.out.println("suffixes  is " + values.get('s'));
-        System.out.println("toReplace is " + values.get('r'));
 
         // check for errors (i.e. not enough options)
         try {
@@ -200,6 +187,8 @@ public class Rename {
             files.add(f);
         }
 
+        //printStuff(values);
+
         encountered.remove(encountered.indexOf('f'));
         // coming up with file names and storing them in values.get('f')
         for (char c : encountered) {
@@ -214,32 +203,26 @@ public class Rename {
             }
         }
 
-        // delete this---------------------------
-        for (File f : files) {
-            System.out.println(f.getName());
-        }
+        //printStuff(values);
 
         for (int i = 0; i < values.get('f').size(); i++) {
             File theFile = files.get(i);
-            String theName = values.get('f').get(i);
-            File newFile = new File(theName);
-            System.out.print("Renaming " + theFile.getName() + " to " + theName + "... ");
+            File newFile = new File(values.get('f').get(i));
+            System.out.print("Renaming " + theFile.getPath() + " to " + newFile.getPath() + " ... ");
             if (newFile.exists()) {
-                System.out.print(theName + " already exists... Overwriting...");
+                System.out.print(FAIL + newFile.getName() + " already exists. Please pick a different name for " + theFile.getName());
+                continue;
             }
             try {
-                // the renameTo() methods only returns false if the file doesn't exist. We checked that before.
-                theFile.renameTo(new File(theName));
+                // the renameTo() methods only returns false if the file doesn't exist, and we checked that before. (2 for-loops ago)
+                theFile.renameTo(new File(newFile.getPath()));
                 System.out.println("Success!");
             } catch (SecurityException se) {
-                System.out.println("Fail. You do not have permission to write to the file.");
+                System.out.println(FAIL + "You do not have permission to write to the file.");
             } catch (NullPointerException npe) {
-                System.out.println("Fail. The parameter target is null.");
+                System.out.println(FAIL + "The parameter target is null.");
             }
         }
-
-        System.out.println("reached");
-        printStuff(values);
     }
 }
 
