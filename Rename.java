@@ -10,7 +10,7 @@ public class Rename {
 
     public static void printHelp() {
         System.out.println();
-        System.out.println("(c) 2021 Eddie Kim, Revised May XX, 2021."); // edit this
+        System.out.println("(c) 2021 Eddie Kim, Revised May 24, 2021.");
         System.out.println("Usage: rename [-option argument1 argument2 ...]");
         System.out.println();
         System.out.println("Options:");
@@ -42,7 +42,7 @@ public class Rename {
     }
     public static void errorTargetMissing(String theFile, String theTarget) {
         System.out.println("Replace operation failed - " + theFile + " does not contain " + theTarget + " in its name. " +
-                "Please make sure the filename contains the replacement target.")
+                "Please make sure the filename contains the replacement target.");
     }
 
     public static void printStuff(Map<Character, ArrayList<String>> values) {
@@ -95,7 +95,7 @@ public class Rename {
                 System.out.println("Duplicate file name spotted (" + args[i] + ")... will still try to rename it.");
             } else {
                 values.get(opt).add(args[i]);
-                printStuff(values);
+                printStuff(values); // delete this-----------------
             }
             ++i;
         }
@@ -104,7 +104,7 @@ public class Rename {
     // the 'op' parameter decides whether to prepend or append.
     public static void prependOrAppend(Map<Character, ArrayList<String>> values, char op) {
         int files = values.get('f').size();
-        int snippets = values.get('p').size();
+        int snippets = values.get(op).size();
         for (int i = 0; i < files; i++) {
             for (int j = 0; j < snippets; j++) {
                 String toAdd = values.get(op).get(j);
@@ -117,7 +117,7 @@ public class Rename {
         }
     }
 
-    public static void replace(Map<Character, ArrayList<String>> values) {
+    public static void replace(Map<Character, ArrayList<String>> values) throws Exception {
         for (int i = 0; i < values.get('f').size(); i++) {
             String theFile = values.get('f').get(i);
             String theTarget = values.get('r').get(0);
@@ -138,7 +138,7 @@ public class Rename {
             return;
         }
 
-        // delete this
+        // -------------------------delete this
         System.out.print("args      is [");
         for (int i = 0; i < args.length - 1; i++) {
             System.out.print(args[i] + ", ");
@@ -155,46 +155,53 @@ public class Rename {
                 entry('r', new ArrayList<String>(2))
         );
 
-        int i = 0;
-        while (i < args.length) {
-            if (Arrays.asList(options).contains(args[i])) {
+        // parsing
+        int index = 0;
+        while (index < args.length) {
+            if (Arrays.asList(options).contains(args[index])) {
                 try {
-                    checkErrors(encountered, args, i);
+                    checkErrors(encountered, args, index);
                     System.out.println("encountered is " + encountered);
                 } catch (Exception ex) {
                     return;
                 }
                 char opt = encountered.get(encountered.size() - 1);
-                collectValues(opt, values, args, i);
-                i += values.get(opt).size();
-            } else if (args[i].charAt(0) == '-') {
-                errorInvalidOption(args[i]);
+                collectValues(opt, values, args, index);
+                index += values.get(opt).size();
+            } else if (args[index].charAt(0) == '-') {
+                errorInvalidOption(args[index]);
                 return;
             }
-            ++i;
+            ++index;
         }
+
+        // ---------------------------delete this
         System.out.println("filenames is " + values.get('f'));
         System.out.println("prefixes  is " + values.get('p'));
         System.out.println("suffixes  is " + values.get('s'));
         System.out.println("toReplace is " + values.get('r'));
 
-
+        // check for errors (i.e. not enough options)
         try {
             checkOptions(encountered);
         } catch (Exception ex) {
             return;
         }
 
-        encountered.remove(encountered.indexOf('f'));
+        ArrayList<File> files = new ArrayList<File>();
 
+        // check to see if all files exist; add to the arraylist 'files' if they do.
         for (String s : values.get('f')) {
             File f = new File(s);
             if (!f.exists()) {
                 System.out.println("File doesn't exist (" + s + "). Make sure you put in the correct name or path of the file.");
                 return;
             }
+            files.add(f);
         }
-        // now, change the filenames.
+
+        encountered.remove(encountered.indexOf('f'));
+        // coming up with file names and storing them in values.get('f')
         for (char c : encountered) {
             if (c == 'p' || c == 's') {
                 prependOrAppend(values, c);
@@ -206,6 +213,31 @@ public class Rename {
                 }
             }
         }
+
+        // delete this---------------------------
+        for (File f : files) {
+            System.out.println(f.getName());
+        }
+
+        for (int i = 0; i < values.get('f').size(); i++) {
+            File theFile = files.get(i);
+            String theName = values.get('f').get(i);
+            File newFile = new File(theName);
+            System.out.print("Renaming " + theFile.getName() + " to " + theName + "... ");
+            if (newFile.exists()) {
+                System.out.print(theName + " already exists... Overwriting...");
+            }
+            try {
+                // the renameTo() methods only returns false if the file doesn't exist. We checked that before.
+                theFile.renameTo(new File(theName));
+                System.out.println("Success!");
+            } catch (SecurityException se) {
+                System.out.println("Fail. You do not have permission to write to the file.");
+            } catch (NullPointerException npe) {
+                System.out.println("Fail. The parameter target is null.");
+            }
+        }
+
         System.out.println("reached");
         printStuff(values);
     }
